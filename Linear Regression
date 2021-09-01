@@ -1,0 +1,209 @@
+LINEAR REGRESSION
+
+# Importing Sale Price and Flat Area in another Dataframe
+
+  sale_price=data['Sale_Price'].head(30)
+  flat_area=data['Flat Area (in Sqft)'].head(30)
+  sample_data=pd.DataFrame({'sale_price': sale_price, 'flat_area': flat_area})
+  sample_data
+  
+# Visualizing this Data
+
+  plt.figure(dpi=150)
+  plt.scatter(sample_data.flat_area,sample_data.sale_price,color='red')
+  plt.xlabel('Flat Area')
+  plt.ylabel('Sale Price')
+  plt.title('Sale Price Vs Flat Area')
+  plt.legend()
+  plt.show()
+  
+# Based on mean of sale price, making another column to store that and visualise the same
+
+  sample_data['mean_sale_price']=sample_data.sale_price.mean()
+  plt.figure(dpi=150)
+  plt.scatter(sample_data.flat_area,sample_data.sale_price,color='red')
+  plt.plot(sample_data.flat_area,sample_data.mean_sale_price,color='yellow',label='Mean Sale Price')
+  plt.xlabel('Flat Area')
+  plt.ylabel('Sale Price')
+  plt.title('Sale Price Vs Flat Area')
+  plt.legend()
+  plt.show()
+ 
+ # Dealing the linear relation of line ( y= mx + c ) and hence, taking paramters of line ( m and c )
+
+  c=0
+  m=210
+  line=[]
+  for i in range(len(sample_data)):
+      line.append(sample_data.flat_area[i]*m+c)
+
+  plt.figure(dpi=150)
+  plt.scatter(sample_data.flat_area,sample_data.sale_price,color='red')
+  plt.plot(sample_data.flat_area,line,color='yellow',label='m=210; c=0')
+  plt.xlabel('Flat Area')
+  plt.ylabel('Sale Price')
+  MSE=mean_squared_error(sample_data.sale_price,line)
+  plt.title('Slope' + str(m) + 'with MSE: ' + str(MSE))
+  plt.legend()
+  plt.show()
+ 
+ # We define a fnc to find the slope 
+
+  def slope_error(slope, intercept, sample_data):
+      sale=[]
+      for i in range(len(sample_data.flat_area)):
+          tmp=sample_data.flat_area[i]*slope + intercept
+          sale.append(tmp)
+      MSE=mean_squared_error(sample_data.sale_price, sale)
+      
+    slope=[i/10 for i in range(0,5000)]
+    Cost=[]
+    for i in slope:
+        cost=slope_error(slope=i,intercept=0,sample_data=sample_data)
+        Cost.append(cost)
+    
+# Arranging in dataframe
+
+  Cost_table=pd.DataFrame({'slope':slope,'cost':cost})
+  Cost_table.tail()
+  
+# Plotting the cost values w.r.t every value of slope
+
+  plt.plot(Cost_table.slope, Cost_table.cost, label='Cost Function Curve')
+  plt.xlabel(" Value of Slope")
+  plt.ylabel(" Cost")
+  plt.legend()
+  
+# Intercept Part
+
+  def intercept_error(slope,intercept,sample_data):
+      sale=[]
+      for i in range(len(sample_data)):
+          tmp=sample_data.flat_area[i]*slope + intercept
+          sale.append(tmp)
+      MSE=mean_squared_error(sample_data.sale_price,sale)
+      return MSE
+      
+      intercept=[i for i in range(5000,50000)]
+      Cost=[]
+      for i in intercept:
+          cost=intercept_error(slope=234,intercept=i,sample_data=sample_data)
+          Cost.append(cost)
+      Cost_table=pd.DataFrame({'intercept':intercept,'cost':cost})
+      Cost_table.tail()
+      
+# Plotting the cost values w.r.t every value of intercept
+
+    plt.plot(Cost_table.intercept, Cost_table.cost, label='Cost Function Curve')
+    plt.xlabel(" Value of Intercept")
+    plt.ylabel(" Cost")
+    plt.legend()
+    
+# New intercept at at particular value, since we get approx value of optimised parameters ( c and m )
+
+    new_intercept=Cost_table['intercept'][Cost_table['cost']==Cost_table['cost'].min()].values
+    new_intercept[0]
+    
+IMPLEMENTING GRADIENT FUNCTION
+# Initializing Parameters
+​
+def param_init(Y):
+    m=0.
+    c=Y.mean()
+    return m,c
+# Generating Predictions
+​
+def generate_predictions(m,c,X):
+    prediction=[]
+    for x in X:
+        pred=(m*x) + c
+        prediction.append(pred)
+    return prediction
+# Calculating Cost
+​
+def compute_cost(prediction,Y):
+    cost=np.sum(((prediction-Y)**2)/len(Y))
+    return cost
+# Updating Parameters (a)--> Calculating Gradients
+​
+def gradients(prediction,Y,X):
+    n=len(Y)
+    Gm=2/n*np.sum((prediction-Y)*X)
+    Gc=2/n*np.sum((prediction-Y))
+    return Gm,Gc
+# Updating Parameters (b)--> Using gradients to update parameters
+​
+def param_update(m_old,c_old,Gm_old,Gc_old,alpha):
+    m_new=m_old-(alpha*Gm_old)
+    c_new=c_old-(alpha*Gc_old)
+    return m_new,c_new
+# Results 
+​
+def result(m,c,X,Y,cost,prediction,i):
+    
+    ''' Print and plot the final result obtained from gradeint descent '''
+    # If the gradient descent converged to the optimum value before max_iter
+    if i < max_iter - 1:
+        print("***** Gradient Descent has converged at iteration {} ***** ".format(i))
+    else:
+        print("**** Result After", max_iter, "iteration is: ****")
+        
+    # Plotting final results 
+    plt.figure(dpi=150,figsize=(14,7))
+    plt.scatter(X,Y,color='red',label='data points')
+    label='final regression line: m = {}; c = {}'.format(str(m),str(c))
+    plt.plot(X,predictions,color='green',label=label)
+    plt.xlabel('flat_area')
+    plt.ylabel('sale_price')
+    plt.title('final regression model')
+    plt.legend()
+    
+    
+# Defining dataset and reshaping data and scaling data before to avoid inifnite looping values
+
+    from sklearn.preprocessing import StandardScaler
+    scaler=StandardScaler()
+
+    sale_price=scaler.fit_transform(sample_data['sale_price'].values.reshape(-1,1))
+    flat_area=scaler.fit_transform(sample_data['flat_area'].values.reshape(-1,1))
+
+# Declaring Parameters
+    max_iter=1000
+    cost_old=0
+    alpha=0.01
+
+# Step 1: Function calling (param_init)
+    m,c=param_init(sale_price)
+
+# Gradient Descent in action
+    for i in range(0,max_iter):
+    
+    # Step 2: Function Calling (Generating Fnc.)
+    predictions= generate_predictions(m,c, flat_area)
+    
+    # Step 3: Function Calling (Calculating Cost)
+    cost_new= compute_cost(predictions, sale_price)
+    
+    # Checking if Gradient Descent is coverged or not
+    if abs(cost_new - cost_old)<10**(-7):
+        break
+        
+    # Calculating Gradients
+    Gm,Gc= gradients(predictions, sale_price, flat_area)
+    
+    # Step 4: Function Calling (Updating parameters m and c)
+    m,c=param_update(m,c,Gm,Gc,alpha)
+    
+    # Display result after every 20 iterations
+    if i%20==0:
+        print(" After Iteration", i , ": m = ", m, ": c = ", c, ": Cost = ", cost_new)
+        
+    # updating cost_old
+    cost_old=cost_new
+    
+    ## Final Results ##
+    result(m,c,flat_area,sale_price,cost_new,predictions,i)
+      
+ 
+  
+ 
