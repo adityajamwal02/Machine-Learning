@@ -1,0 +1,172 @@
+#MEAN REGRESSION MODEL
+
+	import numpy as np
+	import pandas as pd
+	import matplotlib.pyplot as plt
+	from sklearn.impute import SimpleImputer
+	import seaborn as sns
+	import warnings
+
+#IMPORT DATA
+
+	data=pd.read_csv("Transformed_Housing_Data2(1)[1].csv")
+	data.info()
+
+# MEAN SALE PRICE
+
+	data['mean_sales']=data['Sale_Price'].mean()
+	data['mean_sales'].head()
+	
+# Plotting relation btw Mean Sale Price and Sale Price
+
+	plt.figure(dpi=100)
+	k=range(0,len(data))
+	plt.scatter(k,data['Sale_Price'].sort_values(),color='red',label='Actual Sale Price')
+	plt.plot(k,data['mean_sales'].sort_values(),color='green',label='Mean_Price')
+	plt.xlabel('Fitted Points Ascendingly')
+	plt.ylabel('Sale Price')
+	plt.title('Overall Mean')
+	plt.legend()
+
+# Calculating Avg Sale Price w.r.t Overall Grade
+
+	grades_mean=data.pivot_table(values='Sale_Price',columns='Overall Grade',aggfunc=np.mean)
+	grades_mean
+
+# Storing these new values in a new column
+
+	data['grades_mean']=0
+	for i in grades_mean.columns:
+		data['grades_mean'][data['Overall Grade']==i]=grades_mean[i][0]
+	data['grades_mean'].head()
+
+# Gradewise list
+
+	gradewise_list=[]
+	for i in range(1,11):
+		k=data['Sale_Price'][data['Overall Grade']==i]
+		gradewise_list.append(k)
+    
+	
+# Classwise list
+
+	classwise_list=[]
+	for i in range(1,11):
+		k=data['Sale_Price'][data['Overall Grade']==i]
+		classwise_list.append(k)
+	
+# Comparison between Gradewise and Classwise Lists
+
+	plt.figure(dpi=120,figsize=(15,9))
+
+# Plotting Sale Price Gradewise
+# Z variable for x axis
+
+	z=0
+	for i in range(1,11):
+		points=[k for k in range(z,z+len(classwise_list[i-1]))]
+	
+#Plotting
+
+	plt.scatter(points, classwise_list[i-1].sort_values(),label=("House with Overall grade", i),s=4)
+
+# Plotting gradewise mean
+
+	plt.scatter(points, [classwise_list[i-1].mean() for q in range(len(classwise_list[i-1]))], s=6, color='pink')
+	z=max(points)+1
+
+# Plotting Overall Mean
+
+	plt.scatter([q for q in range(0,z)], data['mean_sales'], color='red', label='Overall Mean', s=6)
+	plt.xlabel("Fitted Points (Ascending)")
+	plt.ylabel('Sale Price')
+	plt.title("Overall Mean")
+	plt.legend(loc=4)
+
+
+RESIDUAL PLOT
+# RESIDUAL = PREDICTION - ACTUAL
+
+	mean_difference=data['mean_sales']-data['Sale_Price']
+	grade_mean_difference=data['grades_mean']-data['Sale_Price']
+
+	k=range(0,len(data))
+	l=[0 for i in range(len(data))]
+	plt.figure(figsize=(15,6),dpi=100)
+
+	plt.subplot(1,2,1)
+	plt.scatter(k,mean_difference,color='red',label='Residuals',s=2)
+	plt.plot(k,l,color='green',label='mean regression', linewidth=3)
+	plt.xlabel('Fitted Points')
+	plt.ylabel('Residuals')
+	plt.title('Residuals w.r.t Gradewise Mean')
+
+	plt.subplot(1,2,2)
+	plt.scatter(k,grade_mean_difference,color='red',label='Residuals',s=2)
+	plt.plot(k,l,color='green',label='mean regression', linewidth=3)
+	plt.xlabel('Fitted Points')
+	plt.ylabel('Residuals')
+	plt.legend()
+	plt.title('Residuals w.r.t Gradewise Mean')
+
+	plt.legend()
+	
+ERRORS
+# Errors (NORMALLY) ---> NOT PREFERRED METHOD
+
+	count=sum(mean_difference)/len(data)
+	print(round(count,5))
+
+# Defining the variables for (Mean Absolute Error)
+
+	Y=data['Sale_Price']
+	Y1=data['mean_sales']
+	Y2=data['grades_mean']
+	n=len(data)
+	
+# Checking the length of each variable added
+	
+	len(Y), len(Y1), len(Y2), n
+	
+# Formula for MAE with mean_sales (Mean Absolute Error)
+	
+	cost_mean=sum(abs(Y1-Y))/n
+	cost_mean
+	
+# Formula for MAE with grades_mean (Mean Absolute Error)
+
+	cost_grade_mean=sum(abs(Y2-Y))/n
+	cost_grade_mean
+	
+# Using sklearn library to find out MAE
+
+	from sklearn.metrics import mean_absolute_error
+	cost_grade_mean=mean_absolute_error(Y2,Y)
+	cost_grade_mean
+
+# Using sklearn library to find out MSE (Mean Squared Error)
+
+	from sklearn.metrics import mean_squared_error
+	cost_mean=mean_squared_error(Y1,Y)
+	cost_grade_mean=mean_squared_error(Y2,Y)
+	cost_mean, cost_grade_mean
+
+# Using sklearn library to find out RMSE (Root Mean Squared Error)
+
+	from sklearn.metrics import mean_squared_error
+	cost_mean=mean_squared_error(Y1,Y)**0.5
+	cost_grade_mean=mean_squared_error(Y2,Y)**0.5
+	cost_mean, cost_grade_mean
+
+# R^2
+
+	Y=data['Sale_Price']
+	Y1=data['mean_sales']
+	Y2=data['grades_mean']
+	n=len(data)
+
+	mse_mean=mean_squared_error(Y1,Y)
+	mse_model=mean_squared_error(Y2,Y)
+	R2= 1 - mse_model/mse_mean
+	print(R2)
+
